@@ -1,88 +1,185 @@
-<script>
-    // Fetch posts from the backend when the page loads
-    fetch('https://mysocialwidget.onrender.com/api/posts')
-      .then(response => response.json())
-      .then(data => {
-        const postsDiv = document.getElementById('posts');
-        data.reverse().forEach(post => {
-          const postElement = document.createElement('div');
-          postElement.innerHTML = `
-            <h2>${post.title}</h2>
-            <p>${post.content}</p>
-            <button class="like-button">👍 Like (${post.likes})</button>
-            <button class="reply-button">💬 Reply</button>
-            <div class="comments">
-              ${post.comments.map(comment => `<p>${comment}</p>`).join('')}
-            </div>
-            <div class="reply-form" style="display: none;">
-              <input type="text" class="comment-input" placeholder="Write a comment...">
-              <button class="submit-comment">Post Comment</button>
-            </div>
-          `;
-          postsDiv.appendChild(postElement);
-  
-          // Handle Like button click
-          const likeButton = postElement.querySelector('.like-button');
-          likeButton.addEventListener('click', () => {
-            fetch('https://mysocialwidget.onrender.com/api/posts/like', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ title: post.title })
-            })
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Social Widget</title>
+  <style>
+    /* Basic CSS for styling */
+    body {
+      font-family: Arial, sans-serif;
+      background-color: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    #postForm {
+      margin-bottom: 20px;
+    }
+    .post {
+      background-color: #fff;
+      border: 1px solid #ccc;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+    }
+    .post h2 {
+      margin: 0;
+      font-size: 1.5em;
+    }
+    button {
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .comments {
+      margin-top: 10px;
+      padding-left: 10px;
+    }
+    .reply-form {
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Header -->
+  <h1>Social Widget</h1>
+
+  <!-- Form to Add New Post -->
+  <form id="postForm">
+    <input type="text" id="title" placeholder="Post Title" required>
+    <textarea id="content" placeholder="Write your post here..." required></textarea>
+    <button type="submit">Add Post</button>
+  </form>
+
+  <!-- Div to Display Posts -->
+  <div id="posts"></div>
+
+  <!-- JavaScript for handling interactions -->
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const postsDiv = document.getElementById('posts');
+
+      // Helper function to create post element
+      function createPostElement(post) {
+        const postElement = document.createElement('div');
+        postElement.classList.add('post');
+        postElement.innerHTML = `
+          <h2>${post.title}</h2>
+          <p>${post.content}</p>
+          <button class="like-button">👍 Like (${post.likes || 0})</button>
+          <button class="reply-button">💬 Reply</button>
+          <div class="comments">
+            ${post.comments?.map(comment => `<p>${comment}</p>`).join('') || ''}
+          </div>
+          <div class="reply-form" style="display: none;">
+            <input type="text" class="comment-input" placeholder="Write a comment...">
+            <button class="submit-comment">Post Comment</button>
+          </div>
+        `;
+
+        // Add Like button event
+        const likeButton = postElement.querySelector('.like-button');
+        likeButton.addEventListener('click', () => handleLike(post.title, likeButton));
+
+        // Add Reply button event
+        const replyButton = postElement.querySelector('.reply-button');
+        const replyForm = postElement.querySelector('.reply-form');
+        replyButton.addEventListener('click', () => {
+          replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
+        });
+
+        // Add Submit Comment button event
+        const submitCommentButton = postElement.querySelector('.submit-comment');
+        submitCommentButton.addEventListener('click', () => handleComment(post.title, postElement));
+
+        return postElement;
+      }
+
+      // Fetch posts from the backend when the page loads
+      function fetchPosts() {
+        fetch('https://mysocialwidget.onrender.com/api/posts')
+          .then(response => response.json())
+          .then(data => {
+            postsDiv.innerHTML = ''; // Clear previous posts
+            data.reverse().forEach(post => {
+              const postElement = createPostElement(post);
+              postsDiv.appendChild(postElement);
+            });
+          })
+          .catch(error => {
+            console.error('Error fetching posts:', error);
+            postsDiv.innerHTML = '<p>Error loading posts. Please try again later.</p>';
+          });
+      }
+
+      // Handle Like button click
+      function handleLike(title, button) {
+        fetch('https://mysocialwidget.onrender.com/api/posts/like', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title })
+        })
+          .then(response => response.json())
+          .then(updatedPost => {
+            button.innerText = `👍 Like (${updatedPost.likes})`;
+          })
+          .catch(error => console.error('Error liking post:', error));
+      }
+
+      // Handle Submit Comment button click
+      function handleComment(title, postElement) {
+        const commentInput = postElement.querySelector('.comment-input');
+        const comment = commentInput.value.trim();
+        if (comment) {
+          fetch('https://mysocialwidget.onrender.com/api/posts/comment', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, comment })
+          })
             .then(response => response.json())
             .then(updatedPost => {
-              likeButton.innerText = `👍 Like (${updatedPost.likes})`;
-            });
-          });
-  
-          // Handle Reply button click
-          const replyButton = postElement.querySelector('.reply-button');
-          const replyForm = postElement.querySelector('.reply-form');
-          replyButton.addEventListener('click', () => {
-            replyForm.style.display = replyForm.style.display === 'none' ? 'block' : 'none';
-          });
-  
-          // Handle Submit Comment button click
-          const submitCommentButton = postElement.querySelector('.submit-comment');
-          submitCommentButton.addEventListener('click', () => {
-            const commentInput = postElement.querySelector('.comment-input');
-            const comment = commentInput.value;
-            if (comment) {
-              fetch('https://mysocialwidget.onrender.com/api/posts/comment', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ title: post.title, comment: comment })
-              })
-              .then(response => response.json())
-              .then(updatedPost => {
-                const commentsDiv = postElement.querySelector('.comments');
-                commentsDiv.innerHTML = updatedPost.comments.map(comment => `<p>${comment}</p>`).join('');
-                commentInput.value = '';
-              });
-            }
-          });
-        });
+              const commentsDiv = postElement.querySelector('.comments');
+              commentsDiv.innerHTML = updatedPost.comments.map(comment => `<p>${comment}</p>`).join('');
+              commentInput.value = '';
+            })
+            .catch(error => console.error('Error posting comment:', error));
+        } else {
+          alert('Please write a comment before submitting.');
+        }
+      }
+
+      // Handle form submission to add a new post
+      const form = document.getElementById('postForm');
+      form.addEventListener('submit', function(event) {
+        event.preventDefault();
+        const title = document.getElementById('title').value.trim();
+        const content = document.getElementById('content').value.trim();
+
+        if (title && content) {
+          fetch('https://mysocialwidget.onrender.com/api/posts', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ title, content })
+          })
+            .then(response => response.json())
+            .then(data => {
+              const postElement = createPostElement(data);
+              postsDiv.prepend(postElement);
+              form.reset(); // Reset the form after successful submission
+            })
+            .catch(error => console.error('Error adding post:', error));
+        } else {
+          alert('Please fill in both the title and content.');
+        }
       });
-  
-    // Handle form submission to add a new post
-    const form = document.getElementById('postForm');
-    form.addEventListener('submit', function (event) {
-      event.preventDefault();
-      const title = document.getElementById('title').value;
-      const content = document.getElementById('content').value;
-  
-      fetch('https://mysocialwidget.onrender.com/api/posts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, content })
-      })
-        .then(response => response.json())
-        .then(data => {
-          const postsDiv = document.getElementById('posts');
-          const postElement = document.createElement('div');
-          postElement.innerHTML = `<h2>${data.title}</h2><p>${data.content}</p>`;
-          postsDiv.prepend(postElement);
-        });
+
+      // Initial load
+      fetchPosts();
     });
   </script>
-  
+
+</body>
+</html>
