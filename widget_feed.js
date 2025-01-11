@@ -24,7 +24,7 @@ async function addPost() {
         const newPost = { title, content };
 
         // Send the new post to the backend
-        await fetch('http://localhost:5000/api/posts', {
+        await fetch('http://localhost:3000/api/posts', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
