@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>My Social Feed</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f9;
+            margin: 0;
+            padding: 0;
+        }
+        .container {
+            max-width: 600px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #fff;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-radius: 8px;
+        }
+        h1 {
+            text-align: center;
+        }
+        form {
+            margin-bottom: 20px;
+        }
+        input, textarea, button {
+            width: 100%;
+            padding: 10px;
+            margin: 10px 0;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+        }
+        ul {
+            list-style: none;
+            padding: 0;
+        }
+        .post {
+            background-color: #f9f9f9;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Welcome to My Social Feed</h1>
+        <form id="create-post-form">
+            <input type="text" id="post-title" placeholder="Title" required>
+            <textarea id="post-content" placeholder="What's on your mind?" required></textarea>
+            <button type="submit">Post</button>
+        </form>
+        <ul id="post-feed"></ul>
+    </div>
+
+    <script>
+        // Fetch posts from the server and display them
+        async function loadPosts() {
+            const response = await fetch('http://localhost:5000/api/posts');
+            const posts = await response.json();
+            const feed = document.getElementById('post-feed');
+            feed.innerHTML = '';
+
+            posts.forEach(post => {
+                const postItem = document.createElement('li');
+                postItem.classList.add('post');
+                postItem.innerHTML = `<h3>${post.title}</h3><p>${post.content}</p>`;
+                feed.appendChild(postItem);
+            });
+        }
+
+        // Handle the Create Post form submission
+        document.getElementById('create-post-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const title = document.getElementById('post-title').value;
+            const content = document.getElementById('post-content').value;
+
+            await fetch('http://localhost:5000/api/posts', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ title, content })
+            });
+
+            document.getElementById('post-title').value = '';
+            document.getElementById('post-content').value = '';
+
+            loadPosts();
+        });
+
+        // Load posts when the page loads
+        loadPosts();
+    </script>
+</body>
+</html>
