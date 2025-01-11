@@ -86,7 +86,18 @@
                 },
                 body: JSON.stringify({ title, content })
             });
+.then(response => response.json())            
+.then(data => {
+    // Clear the form fields
+    document.getElementById('title').value = '';
+    document.getElementById('content').value = '';
 
+    // Display the new post on the feed
+    const postsDiv = document.getElementById('posts');
+    const postElement = document.createElement('div');
+    postElement.innerHTML = `<h2>${data.title}</h2><p>${data.content}</p>`;
+    postsDiv.appendChild(postElement);
+});
             document.getElementById('post-title').value = '';
             document.getElementById('post-content').value = '';
 
