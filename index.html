@@ -59,7 +59,7 @@
     <script>
         // Fetch posts from the server and display them
         async function loadPosts() {
-            const response = await fetch('http://localhost:5000/api/posts');
+            const response = await fetch('https://mysocialwidget.onrender.com/api/posts');
             const posts = await response.json();
             const feed = document.getElementById('post-feed');
             feed.innerHTML = '';
